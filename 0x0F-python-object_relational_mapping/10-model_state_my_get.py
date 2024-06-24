@@ -1,42 +1,29 @@
 #!/usr/bin/python3
-"""script that prints the State object with the name
-passed as argument from the database hbtn_0e_6_usa"""
-from model_state import State, Base
-from sqlalchemy import (create_engine)
-from sys import argv
+"""Defines a script that prints a `State` object with name passed as arg."""
+from model_state import Base, State
+from sqlalchemy import create_engine
+import sys
 from sqlalchemy.orm import sessionmaker
 
 
-def model_state():
-    """initializate function model_state for db"""
-    state_engine = create_engine('mysql+mysqldb://{}:{}@localhost/{}'.format(
-        argv[1],
-        argv[2],
-        argv[3]),
-        pool_pre_ping=True)
+def print_state(usr, pwd, dB, state_name):
+    """Has logic to print a `State` object with name passed as arg."""
 
-    # associate it with our custom Session class
-    Base.metadata.create_all(state_engine)
+    engine = create_engine(f'mysql+mysqldb://{usr}:{pwd}@localhost:3306/{dB}')
 
-    State_Session = sessionmaker()
-    State_Session.configure(bind=state_engine)
-    session = State_Session()
-    rows = session.query(State).order_by(State.id).all()
+    Base.metadata.create_all(bind=engine)
 
-    name = argv[4]
-    found = False
+    Session = sessionmaker(bind=engine)
+    session = Session()
 
-    for state in rows:
-        if state.name == name:
-            print('{}'.format(state.id))
-            found = True
-            break
-
-    if found is False:
+    rows = session.query(State).order_by(State.id)
+    state = rows.filter(State.name == state_name).first()
+    if state:
+        print(state.id)
+    else:
         print('Not found')
-
-    session.close()
 
 
 if __name__ == '__main__':
-    model_state()
+    user_name, password, db_name, state_name = sys.argv[1:]
+    print_state(user_name, password, db_name, state_name)

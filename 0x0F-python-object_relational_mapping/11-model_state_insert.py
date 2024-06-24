@@ -1,34 +1,29 @@
 #!/usr/bin/python3
-""" script that lists all State objects
-from the database hbtn_0e_6_usa"""
-from model_state import State, Base
-from sqlalchemy import (create_engine)
-from sys import argv
+"""Defines a script that adds a `State` object `Louisiana` to db table"""
+from model_state import Base, State
+from sqlalchemy import create_engine
+import sys
 from sqlalchemy.orm import sessionmaker
 
 
-def model_state():
-    """initializate function model_state for db"""
-    state_engine = create_engine('mysql+mysqldb://{}:{}@localhost/{}'.format(
-        argv[1],
-        argv[2],
-        argv[3]),
-        pool_pre_ping=True)
+def add_state(usr, pwd, dB):
+    """Has logic to add a `State` object to a db table"""
 
-    # associate it with our custom Session class
-    Base.metadata.create_all(state_engine)
-    State_Session = sessionmaker()
-    State_Session.configure(bind=state_engine)
-    session = State_Session()
+    engine = create_engine(f'mysql+mysqldb://{usr}:{pwd}@localhost:3306/{dB}')
 
-    louisiana = State(name='Louisiana')
+    Base.metadata.create_all(bind=engine)
 
-    session.add(louisiana)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    new_state = State(name='Louisiana')
+    session.add(new_state)
     session.commit()
-    print(louisiana.id)
 
-    session.close()
+    s_id = session.query(State.id).filter(State.name == 'Louisiana').first()
+    print(s_id[0])
 
 
 if __name__ == '__main__':
-    model_state()
+    user_name, password, db_name = sys.argv[1:]
+    add_state(user_name, password, db_name)

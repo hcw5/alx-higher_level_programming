@@ -1,34 +1,28 @@
 #!/usr/bin/python3
-"""script that prints the first State object
-from the database hbtn_0e_6_usa"""
-from model_state import State, Base
-from sqlalchemy import (create_engine)
-from sys import argv
+"""Defines a script that lists the first State object from a MySQL table"""
+from model_state import Base, State
+from sqlalchemy import create_engine
+import sys
 from sqlalchemy.orm import sessionmaker
 
 
-def model_state():
-    """initializate function model_state for db"""
-    state_engine = create_engine('mysql+mysqldb://{}:{}@localhost/{}'.format(
-        argv[1],
-        argv[2],
-        argv[3]),
-        pool_pre_ping=True)
+def print_first_state(usr, pwd, dB):
+    """Has logic to print first `State` object from a MySQL database table"""
 
-    # associate it with our custom Session class
-    Base.metadata.create_all(state_engine)
-    State_Session = sessionmaker()
-    State_Session.configure(bind=state_engine)
-    session = State_Session()
-    rows = session.query(State).order_by(State.id).first()
+    engine = create_engine(f'mysql+mysqldb://{usr}:{pwd}@localhost:3306/{dB}')
 
-    if rows:
-        print('{}: {}'.format(rows.id, rows.name))
+    Base.metadata.create_all(bind=engine)
+
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    first_row = session.query(State).order_by(State.id).first()
+    if first_row:
+        print(f'{first_row.id}: {first_row.name}')
     else:
         print('Nothing')
 
-    session.close()
-
 
 if __name__ == '__main__':
-    model_state()
+    user_name, password, db_name = sys.argv[1:]
+    print_first_state(user_name, password, db_name)

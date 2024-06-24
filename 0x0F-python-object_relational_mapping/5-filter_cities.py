@@ -1,50 +1,39 @@
 #!/usr/bin/python3
-"""script that lists all cities from the database hbtn_0e_0_usa"""
+"""
+    Connects to a MySQL db passed as an argument (argv[3]), `hbtn_0e_4_usa`.
+    Retrieves data from tables; `cities`, `states`.
+    Prints cities of the state passed as argument (argv[4]).
+"""
 import MySQLdb
-from sys import argv
+import sys
 
 
-def get_dbase():
-    """Takes arguments argv and list from database
-    Arguments:
-        argv[1]: mysql username
-        argv[2]: mysql password
-        argv[3]: database name
-    """
-    dbase = MySQLdb.connect(host="localhost",
-                            port=3306,
-                            user=argv[1],
-                            passwd=argv[2],
-                            db=argv[3],
-                            charset="utf8"
-                            )
-    # Declaring state name
-    sname = argv[4]
-
-    # Getting a cursor
-    dbase_cur = dbase.cursor()
-
-    # Executing dbase queries
-    dbase_cur.execute("SELECT c.name FROM cities AS c\
-            INNER JOIN states AS s\
-            ON c.state_id = s.id\
-            WHERE s.name=%s\
-            ORDER BY c.id", (sname,))
-
-    # Fetches all the rows of a query result
-    query_rows = dbase_cur.fetchall()
-
-    result = []
-    # Print result one in one
-    for rows in query_rows:
-        result.append(rows[0])
-
-    # Print state names
-    print(', '.join(result))
-
-    dbase_cur.close()
-    dbase.close()
+def main():
+    "Prints cities of the name of a state that is passed as an argument"
+    username, password, db_name, state_name = sys.argv[1:]
+    conn = None
+    try:
+        conn = MySQLdb.connect(
+            host='localhost', port=3306,
+            user=username, passwd=password,
+            db=db_name, charset='utf8'
+        )
+        with conn.cursor() as c:
+            query = """
+                SELECT cities.name
+                FROM cities
+                JOIN states ON cities.state_id = states.id
+                WHERE states.name = %s
+                """
+            c.execute(query, (state_name,))
+            res = [item[0] for item in c.fetchall()]
+            print(', '.join(res))
+    except MySQLdb.Error as err:
+        print(f'Error: {err}')
+    finally:
+        if conn:
+            conn.close()
 
 
 if __name__ == '__main__':
-    get_dbase()
+    main()

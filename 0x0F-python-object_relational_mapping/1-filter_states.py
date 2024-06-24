@@ -1,41 +1,37 @@
 #!/usr/bin/python3
-"""script that lists all states from the database hbtn_0e_0_usa"""
+"""
+    Connects to a MySQL database.
+    Gets data from `states` table.
+    Prints the states starting with 'N'.
+"""
 import MySQLdb
-from sys import argv
+import sys
 
 
-def get_dbase():
-    """Takes arguments argv and list from database
-    Arguments:
-        argv[1]: mysql username
-        argv[2]: mysql password
-        argv[3]: database name
-    """
-    dbase = MySQLdb.connect(host="localhost",
-                            port=3306,
-                            user=argv[1],
-                            passwd=argv[2],
-                            db=argv[3],
-                            charset="utf8"
-                            )
+def main():
+    username, password, db_name = sys.argv[1:]
+    t_name = 'states'
+    conn = None
+    try:
+        conn = MySQLdb.connect(
+            host='localhost', port=3306,
+            user=username, passwd=password,
+            db=db_name, charset='utf8'
+        )
+        with conn.cursor() as c:
+            c.execute(f'USE {db_name}')
+            c.execute(f'SELECT * FROM {t_name}')
 
-    # Getting a cursor
-    dbase_cur = dbase.cursor()
-
-    # Esecuting dbase queries
-    dbase_cur.execute("SELECT * FROM states WHERE name\
-            LIKE BINARY 'N%' ORDER BY id")
-
-    # Fetches all the rows of a query result
-    query_rows = dbase_cur.fetchall()
-
-    # Print result one by one
-    for rows in query_rows:
-        print(rows)
-
-    dbase_cur.close()
-    dbase.close()
+            res = c.fetchall()
+            for row in res:
+                if row[1].startswith('N'):
+                    print(row)
+    except MySQLdb.Error as err:
+        print(f"Error: {err}")
+    finally:
+        if conn:
+            conn.close()
 
 
 if __name__ == '__main__':
-    get_dbase()
+    main()

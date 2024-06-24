@@ -1,35 +1,30 @@
 #!/usr/bin/python3
-"""script that deletes all State objects with a name
-containing the letter a from the database hbtn_0e_6_usa
-"""
+"""Defines a script deletes `State` objects containing letter `a`"""
 from model_state import Base, State
-from sqlalchemy.orm import sessionmaker
-from sys import argv
 from sqlalchemy import create_engine
+import sys
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import delete
 
 
-def model_state_delete():
-    """function that delete the letter a"""
-    engine = create_engine('mysql+mysqldb://{}:{}@localhost:3306/{}'.format(
-        argv[1],
-        argv[2],
-        argv[3]),
-        pool_pre_ping=True
-    )
-    Base.metadata.create_all(engine)
-    Session = sessionmaker()
-    Session.configure(bind=engine)
+def delete_states_with_letter_a(usr, pwd, dB):
+    """Has logic to delete all `State` objects containing letter `a`"""
+
+    engine = create_engine(f'mysql+mysqldb://{usr}:{pwd}@localhost:3306/{dB}')
+
+    Base.metadata.create_all(bind=engine)
+
+    Session = sessionmaker(bind=engine)
     session = Session()
 
-    rows = session.query(State).filter(State.name.contains('a'))
-
-    for state in rows:
-        session.delete(state)
-
+    stmt = (
+        delete(State).
+        where(State.name.like('%a%'))
+    )
+    session.execute(stmt)
     session.commit()
-    session.close()
 
 
 if __name__ == '__main__':
-    """not executed when imported"""
-    model_state_delete()
+    user_name, password, db_name = sys.argv[1:]
+    delete_states_with_letter_a(user_name, password, db_name)

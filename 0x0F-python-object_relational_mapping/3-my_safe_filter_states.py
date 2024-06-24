@@ -1,43 +1,38 @@
 #!/usr/bin/python3
-"""script that lists all states from the database hbtn_0e_0_usa"""
+"""
+    Connects to a MySQL database.
+    Safely gets data from `states` table.
+    Prints the state names matching an argument.
+"""
 import MySQLdb
-from sys import argv
+import sys
 
 
-def get_dbase():
-    """Takes arguments argv and list from database
-    Arguments:
-        argv[1]: mysql username
-        argv[2]: mysql password
-        argv[3]: database name
-    """
-    dbase = MySQLdb.connect(host="localhost",
-                            port=3306,
-                            user=argv[1],
-                            passwd=argv[2],
-                            db=argv[3],
-                            charset="utf8"
-                            )
-    # Declaring name variable
-    name = argv[4]
+def main():
+    """Prints state names matching argument, argv[4]"""
+    username, password, db_name, state_name = sys.argv[1:]
+    t_name = 'states'
+    conn = None
+    try:
+        conn = MySQLdb.connect(
+            host='localhost', port=3306,
+            user=username, passwd=password,
+            db=db_name, charset='utf8'
+        )
+        with conn.cursor() as c:
+            c.execute('USE {}'.format(db_name))
+            q = 'SELECT * FROM {} WHERE name = %s'.format(t_name)
+            c.execute(q, (state_name,))
 
-    # Getting a cursor
-    dbase_cur = dbase.cursor()
-
-    # Esecuting dbase queries
-    dbase_cur.execute("SELECT * FROM states\
-            WHERE name=%s ORDER BY id ASC", (name,))
-
-    # Fetches all the rows of a query result
-    query_rows = dbase_cur.fetchall()
-
-    # Print result one by one
-    for rows in query_rows:
-        print(rows)
-
-    dbase_cur.close()
-    dbase.close()
+            res = c.fetchall()
+            for row in res:
+                print(row)
+    except MySQLdb.Error as err:
+        print(f"Error: {err}")
+    finally:
+        if conn:
+            conn.close()
 
 
 if __name__ == '__main__':
-    get_dbase()
+    main()

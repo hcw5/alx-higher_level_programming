@@ -1,36 +1,30 @@
 #!/usr/bin/python3
-"""script 14-model_city_fetch_by_state.py that prints all
-City objects from the database hbtn_0e_14_usa"""
-from model_state import State, Base
+"""Defines a script that lists all `City` objects from a database"""
+from model_state import Base, State
 from model_city import City
 from sqlalchemy import create_engine
-from sys import argv
+import sys
 from sqlalchemy.orm import sessionmaker
 
 
-def model_city():
-    """initializate function model_state for db"""
-    city_engine = create_engine('mysql+mysqldb://{}:{}@localhost/{}'.format(
-        argv[1],
-        argv[2],
-        argv[3]),
-        pool_pre_ping=True)
+def print_all_states(usr, pwd, dB):
+    """Has logic to print all `City` objects from a database"""
 
-    # associate it with our custom Session class
-    Base.metadata.create_all(city_engine)
-    city_session = sessionmaker()
-    city_session.configure(bind=city_engine)
-    session = city_session()
+    engine = create_engine(f'mysql+mysqldb://{usr}:{pwd}@localhost:3306/{dB}')
 
-    rows = session.query(City, State)\
-                  .filter(City.state_id == State.id)\
-                  .order_by(City.id)
+    Base.metadata.create_all(bind=engine)
 
-    for city, state in rows:
-        print('{}: ({}) {}'.format(state.name, city.id, city.name))
+    Session = sessionmaker(bind=engine)
+    session = Session()
 
-    session.close()
+    result = session.query(City, State).join(
+        City, State.id == City.state_id
+        ).order_by(City.id).all()
+
+    for city, state in result:
+        print(f'{state.name}: ({city.id}) {city.name}')
 
 
 if __name__ == '__main__':
-    model_city()
+    user_name, password, db_name = sys.argv[1:]
+    print_all_states(user_name, password, db_name)
